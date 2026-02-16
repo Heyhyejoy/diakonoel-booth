@@ -305,7 +305,7 @@ const DiakonoelPhotobooth: React.FC = () => {
 
   return (
     <div className="dpb-root">
-      <h1 className="dpb-title">🕵🏻‍♀️ Diaknos Crime Scene Photobooth 🔎</h1>
+      <h1 className="dpb-title">🕵🏻‍♀️ Diakonos Crime Scene Photobooth 🔎</h1>
       <p className="dpb-subtitle">네컷으로 소중한 순간을 기록하세요</p>
 
       <div className="dpb-camera-card">

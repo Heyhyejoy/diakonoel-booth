@@ -14,7 +14,7 @@ const PHOTO_SLOTS = [
   { x: 57, y: 1997, width: 885, height: 589 },
 ] as const;
 
-const TEMPLATE_SRC = "/diakonoel-frame.png"; // public/diakonoel-frame.png (1000×3000)
+const TEMPLATE_SRC = `${import.meta.env.BASE_URL}diakonoel-frame.png`;
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -56,8 +56,7 @@ async function uploadStripToFirebase(dataUrl: string, filename: string) {
 function drawCover(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
-  slot: { x: number; y: number; width: number; height: number },
-  bw: boolean
+  slot: { x: number; y: number; width: number; height: number }
 ) {
   const { x, y, width, height } = slot;
 
@@ -81,7 +80,7 @@ function drawCover(
   }
 
   ctx.save();
-  ctx.filter = bw ? "grayscale(1)" : "none";
+  ctx.filter = "none"; // ✅ 흑백 제거
   ctx.drawImage(img, sx, sy, sWidth, sHeight, x, y, width, height);
   ctx.restore();
 }
@@ -96,7 +95,6 @@ const DiakonoelPhotobooth: React.FC = () => {
   const [flashVisible, setFlashVisible] = useState(false);
 
   const [resultUrl, setResultUrl] = useState<string | null>(null);
-  const [isBW, setIsBW] = useState(false);
 
   type PrintStage = "idle" | "printing" | "done";
   const [printStage, setPrintStage] = useState<PrintStage>("idle");
@@ -151,6 +149,7 @@ const DiakonoelPhotobooth: React.FC = () => {
 
   /**
    * ✅ 저장본도 “미리보기(거울)” 그대로 나오게 캡처도 거울 처리
+   * ✅ 흑백 효과 제거 (항상 컬러)
    */
   const captureFrameToCanvas = (canvas: HTMLCanvasElement) => {
     const video = videoRef.current;
@@ -167,7 +166,7 @@ const DiakonoelPhotobooth: React.FC = () => {
     if (!ctx) return;
 
     ctx.save();
-    ctx.filter = isBW ? "grayscale(1)" : "none";
+    ctx.filter = "none"; // ✅ 흑백 제거
 
     // 거울 캡처
     ctx.translate(vW, 0);
@@ -187,7 +186,7 @@ const DiakonoelPhotobooth: React.FC = () => {
     return tmpCanvas.toDataURL("image/jpeg", 0.95);
   };
 
-  const makeStrip = (shots: string[], bw: boolean): Promise<string> => {
+  const makeStrip = (shots: string[]): Promise<string> => {
     return new Promise((resolve) => {
       const canvas = stripCanvasRef.current;
       if (!canvas) return resolve("");
@@ -211,7 +210,7 @@ const DiakonoelPhotobooth: React.FC = () => {
           img.src = dataUrl;
 
           img.onload = () => {
-            drawCover(ctx, img, PHOTO_SLOTS[idx], bw);
+            drawCover(ctx, img, PHOTO_SLOTS[idx]);
             loaded += 1;
 
             if (loaded === shots.length) {
@@ -277,7 +276,7 @@ const DiakonoelPhotobooth: React.FC = () => {
       }
     }
 
-    const stripUrl = await makeStrip(shots, isBW);
+    const stripUrl = await makeStrip(shots);
     if (!stripUrl) {
       alert("스트립 생성 실패! 콘솔을 확인해줘.");
       setIsCapturing(false);
@@ -306,14 +305,14 @@ const DiakonoelPhotobooth: React.FC = () => {
 
   return (
     <div className="dpb-root">
-      <h1 className="dpb-title">⋆⁺₊❅ Diakonoël Photobooth ⋆⁺₊❅</h1>
+      <h1 className="dpb-title">🕵🏻‍♀️ Diaknos Crime Scene Photobooth 🔎</h1>
       <p className="dpb-subtitle">네컷으로 소중한 순간을 기록하세요</p>
 
       <div className="dpb-camera-card">
         <div className="dpb-video-wrapper">
           <video
             ref={videoRef}
-            className={`dpb-video ${isBW ? "dpb-video--bw" : ""}`}
+            className="dpb-video"
             autoPlay
             muted
             playsInline
@@ -325,29 +324,6 @@ const DiakonoelPhotobooth: React.FC = () => {
         </div>
 
         <div className="dpb-controls">
-          <div className="dpb-toggle">
-            <button
-              type="button"
-              className={`dpb-toggle-btn ${
-                isBW ? "dpb-toggle-btn--active" : ""
-              }`}
-              onClick={() => setIsBW(true)}
-              disabled={isCapturing || printStage === "printing"}
-            >
-              B&amp;W
-            </button>
-            <button
-              type="button"
-              className={`dpb-toggle-btn ${
-                !isBW ? "dpb-toggle-btn--active" : ""
-              }`}
-              onClick={() => setIsBW(false)}
-              disabled={isCapturing || printStage === "printing"}
-            >
-              Color
-            </button>
-          </div>
-
           <div className="dpb-buttons">
             {!hasCamera && (
               <button className="dpb-btn" type="button" onClick={startCamera}>
@@ -402,7 +378,7 @@ const DiakonoelPhotobooth: React.FC = () => {
             ? "프린터에서 출력 중…"
             : printStage === "done"
             ? "출력 완료! "
-            : "촬영 후 인생네컷이 프린터에서 출력됩니다 𐙚⋆°｡⋆♡ㅋ"}
+            : "촬영 후 인생네컷이 프린터에서 출력됩니다 🔎"}
         </p>
       </div>
 
